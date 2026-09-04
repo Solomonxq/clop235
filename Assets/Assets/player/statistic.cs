@@ -1,5 +1,5 @@
 using UnityEngine;
-using System; // Обов'язково додаємо це для використання Action (івентів)
+using System;
 
 public class PlayerStats : MonoBehaviour
 {
@@ -12,43 +12,43 @@ public class PlayerStats : MonoBehaviour
     public float currentStamina;
     public float staminaRegenRate = 15f; 
 
-    // Створюємо івенти (радіо-канали), на які зможуть підписатися інші скрипти
-    public event Action<float, float> OnHealthChanged;   // Передає поточне і максимальне ХП
-    public event Action<float, float> OnStaminaChanged;  // Передає поточну і максимальну стаміну
-    public event Action OnDied;                          // Нічого не передає, просто сповіщає про смерть
+    public event Action<float, float> OnHealthChanged;
+    public event Action<float, float> OnStaminaChanged;
+    public event Action OnDied;
 
     void Start()
     {
         currentHealth = maxHealth;
         currentStamina = maxStamina;
         
-        // Викликаємо івенти на старті, щоб UI одразу показав повні смужки
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
         OnStaminaChanged?.Invoke(currentStamina, maxStamina);
     }
 
     void Update()
     {
+        // Регенерація стаміни
         if (currentStamina < maxStamina)
         {
             currentStamina += staminaRegenRate * Time.deltaTime;
             if (currentStamina > maxStamina) currentStamina = maxStamina;
-            
-            // Сповіщаємо всіх слухачів, що стаміна відновилася
             OnStaminaChanged?.Invoke(currentStamina, maxStamina);
         }
     }
 
     public void TakeDamage(float amount)
     {
+        // Перевіряємо лише чи гравець ще живий
+        if (currentHealth <= 0) return;
+
+        // Отримуємо шкоду
         currentHealth -= amount;
-        
-        // Сповіщаємо всіх слухачів (наприклад, UI або скрипт звуку), що ХП змінилося
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
 
+        // Перевірка на смерть
         if (currentHealth <= 0)
         {
-            OnDied?.Invoke(); // Сповіщаємо про смерть
+            OnDied?.Invoke(); 
         }
     }
 
@@ -57,8 +57,6 @@ public class PlayerStats : MonoBehaviour
         if (currentStamina >= amount)
         {
             currentStamina -= amount;
-            
-            // Сповіщаємо про витрату стаміни
             OnStaminaChanged?.Invoke(currentStamina, maxStamina);
             return true;
         }

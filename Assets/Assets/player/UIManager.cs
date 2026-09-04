@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.UI; // Обов'язково додаємо це, щоб працювати з UI елементами (Slider)
+using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
@@ -11,32 +11,62 @@ public class UIManager : MonoBehaviour
 
     void OnEnable()
     {
-        // Підписуємося на події
-        playerStats.OnHealthChanged += UpdateHealthUI;
-        playerStats.OnStaminaChanged += UpdateStaminaUI; // Додали підписку на стаміну
-        playerStats.OnDied += ShowDeathScreen;
+        // 1. Якщо гравець не перетягнутий в Інспекторі, шукаємо його на сцені автоматично
+        if (playerStats == null)
+        {
+            playerStats = FindObjectOfType<PlayerStats>();
+        }
+
+        // 2. Якщо скрипт успішно знайшов гравця, підписуємося на події
+        if (playerStats != null)
+        {
+            playerStats.OnHealthChanged += UpdateHealthUI;
+            playerStats.OnStaminaChanged += UpdateStaminaUI;
+            playerStats.OnDied += ShowDeathScreen;
+        }
+        else
+        {
+            Debug.LogError("УВАГА: UIManager не може знайти об'єкт зі скриптом PlayerStats на сцені!");
+        }
     }
 
     void OnDisable()
     {
-        // Відписуємося
-        playerStats.OnHealthChanged -= UpdateHealthUI;
-        playerStats.OnStaminaChanged -= UpdateStaminaUI;
-        playerStats.OnDied -= ShowDeathScreen;
+        // Відписуємося безпечно
+        if (playerStats != null)
+        {
+            playerStats.OnHealthChanged -= UpdateHealthUI;
+            playerStats.OnStaminaChanged -= UpdateStaminaUI;
+            playerStats.OnDied -= ShowDeathScreen;
+        }
     }
 
     // Ця функція оновлює смужку ХП
     void UpdateHealthUI(float current, float max)
     {
-        healthSlider.maxValue = max;    // Встановлюємо максимум на смужці (100)
-        healthSlider.value = current;   // Встановлюємо поточне заповнення
+        if (healthSlider != null) 
+        {
+            healthSlider.maxValue = max;    
+            healthSlider.value = current;   
+        }
+        else
+        {
+            Debug.LogError("Увага: Не призначено Health Slider в UIManager! Перетягніть його в Інспекторі.");
+        }
     }
 
     // Ця функція оновлює смужку стаміни
     void UpdateStaminaUI(float current, float max)
     {
-        staminaSlider.maxValue = max;
-        staminaSlider.value = current;
+        if (staminaSlider != null)
+        {
+            staminaSlider.maxValue = max;
+            staminaSlider.value = current;
+        }
+        else
+        {
+            Debug.LogError("Увага: Не призначено Stamina Slider в UIManager! Перетягніть його в Інспекторі.");
+        }
     }
 
     void ShowDeathScreen()
