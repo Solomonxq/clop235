@@ -11,6 +11,11 @@ public class EnemyHealth : MonoBehaviour
     public float textOffsetX = 0.1f; 
     public float textOffsetZ = -0.5f; 
 
+    [Header("Налаштування випадіння луту")]
+    [SerializeField] private GameObject itemPrefab; // Префаб предмету, який випадає
+    [Range(0f, 100f)]
+    [SerializeField] private float dropChance = 50f; // Шанс випадіння у відсотках
+
     void Start()
     {
         currentHealth = maxHealth;
@@ -75,9 +80,12 @@ public class EnemyHealth : MonoBehaviour
         }
     }
 
-    void Die()
+   void Die()
     {
         Debug.Log(gameObject.name + " помер!");
+
+        // Викликаємо випадіння луту перед тим, як вимкнути ворога
+        DropItem();
 
         EnemyFollow followScript = GetComponent<EnemyFollow>();
         if (followScript != null) followScript.enabled = false;
@@ -92,6 +100,19 @@ public class EnemyHealth : MonoBehaviour
             rb.simulated = false;
         }
 
-        this.enabled = false;
+        // Повністю видаляємо об'єкт ворога зі сцени
+        Destroy(gameObject);
+    }
+    private void DropItem()
+    {
+        if (itemPrefab == null) return;
+
+        // Генеруємо випадкове число від 0 до 100 для перевірки шансу
+        float roll = Random.Range(0f, 100f);
+
+        if (roll <= dropChance)
+        {
+            Instantiate(itemPrefab, transform.position, Quaternion.identity);
+        }
     }
 }
