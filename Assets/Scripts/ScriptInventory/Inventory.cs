@@ -1,12 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using System.Collections.Generic;
 
 public class Inventory : MonoBehaviour
 {
     public DataBaseInventory data;
 
-    public list<ItemInventory> itemsInventory = new List<ItemInventory>();
+    // Використовуємо єдину назву списку — items
+    public List<ItemInventory> items = new List<ItemInventory>();
 
     public GameObject gameObjShow;
 
@@ -16,7 +18,7 @@ public class Inventory : MonoBehaviour
     public Camera cam;
     public EventSystem es;
 
-    public int currentID;
+    public int currentID = -1;
     public ItemInventory currentItem;
 
     public RectTransform movingObject;
@@ -26,7 +28,8 @@ public class Inventory : MonoBehaviour
     {
         items[id].id = InvItem.id;
         items[id].count = InvItem.count;
-        items[id].itemGameObj.GetComponent<Image>().sprite = data.items[InvItem.id].image;
+        // Виправляємо .image на .icon відповідно до твого класу Item
+        items[id].itemGameObj.GetComponent<Image>().sprite = data.items[InvItem.id].icon;
 
         if (InvItem.count > 1 && InvItem.id != 0)
         {
@@ -36,8 +39,6 @@ public class Inventory : MonoBehaviour
         {
             items[id].itemGameObj.GetComponentInChildren<Text>().text = "";
         }
- 
- 
     }   
 
     public void AddGraphics()
@@ -49,13 +50,14 @@ public class Inventory : MonoBehaviour
             ItemInventory ii = new ItemInventory();
             ii.itemGameObj = newItem;
 
-
             RectTransform rt = newItem.GetComponent<RectTransform>();
-            rt.localPosition = new Veclor3(0, 0, 0);
+            rt.localPosition = new Vector3(0, 0, 0); // Виправлено Veclor3 на Vector3
             rt.localScale = new Vector3(1, 1, 1);
             newItem.GetComponentInChildren<RectTransform>().localScale = new Vector3(1, 1, 1); 
 
             Button tempButton = newItem.GetComponent<Button>();
+
+            tempButton.onClick.AddListener(delegate { SelectObject(); });
 
             items.Add(ii);
         } 
@@ -73,7 +75,7 @@ public class Inventory : MonoBehaviour
             {
                 items[i].itemGameObj.GetComponentInChildren<Text>().text = "";
             }
-            items[i].itemGameObj.GetComponentInChildren<Image>().sprite = data.items[items[i].id].image;
+            items[i].itemGameObj.GetComponentInChildren<Image>().sprite = data.items[items[i].id].icon; // .icon замість .image
         }
     }
 
@@ -81,27 +83,30 @@ public class Inventory : MonoBehaviour
     {
         if (currentID == -1)
         {
-            currentID = int.Parsees.currentSelectedGameOject.name;
+            // Виправлено синтаксис отримання вибраного об'єкта через EventSystem
+            currentID = int.Parse(es.currentSelectedGameObject.name);
             currentItem = CopyInventoryItem(items[currentID]);
-            movingOject.gameOject.SetActive(true);
-            movingOject.GetComponent<Image>().sprite = date.items[currentItem.id].image;
+            movingObject.gameObject.SetActive(true); // Виправлено gameOject на gameObject
+            movingObject.GetComponent<Image>().sprite = data.items[currentItem.id].icon; // Виправлено date на data та image на icon
 
-            AddItem(currentID, data.Items[0], 0);
+            // Очищаємо слот, ставимо нульовий елемент
+            ItemInventory emptyItem = new ItemInventory { id = 0, count = 0 };
+            AddItem(currentID, emptyItem);
         }
         else
         {
-            AddInventoryItem(currentID, items[int.Parse(es.currentSelectedGameOject.name)]);
-            AddInventoryItem(int.Parse(es.currentSelectedGameOject.name), currentItem); 
+            AddItem(currentID, items[int.Parse(es.currentSelectedGameObject.name)]);
+            AddItem(int.Parse(es.currentSelectedGameObject.name), currentItem); 
             currentID = -1;
 
             movingObject.gameObject.SetActive(false);
         }
     }
 
-    public void MoveOject()
+    public void MoveObject()
     {
         Vector3 pos = Input.mousePosition + offset;
-        poz.z = inventoryMainObject.GetComponent<RectTransform>().position.z; 
+        pos.z = InventoryMainObject.GetComponent<RectTransform>().position.z; // Виправлено poz на pos та регістр InventoryMainObject
         movingObject.position = cam.ScreenToWorldPoint(pos);
     }
 
@@ -114,17 +119,12 @@ public class Inventory : MonoBehaviour
 
         return New;
     }
-
 }
 
-
 [System.Serializable]
-
-
 public class ItemInventory
 {
     public int id;
     public GameObject itemGameObj;
-
     public int count;
 }
