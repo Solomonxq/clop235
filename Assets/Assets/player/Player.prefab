@@ -151,6 +151,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
   maxHealth: 100
   currentHealth: 1
+  levl: 1
+  currentExp: 0
+  expToNextLevel: 100
+  expScalingMultiplier: 1.2
   maxStamina: 100
   currentStamina: 0
   staminaRegenRate: 15
@@ -212,8 +216,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d1d7f0935ee5a747801b7882c20b898, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAttack
-  attackRadius: 5
-  attackDamage: 30
-  attackCooldown: 0.5
+  baseAttackRadius: 1.2
+  attackOffset: 1
+  baseAttackDamage: 30
+  inputBufferWindow: 0.1
+  comboSteps: []
   attackVisual: {fileID: 0}
   visualDuration: 0.2

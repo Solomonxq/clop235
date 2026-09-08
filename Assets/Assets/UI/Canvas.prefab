@@ -707,6 +707,8 @@ MonoBehaviour:
   playerStats: {fileID: 0}
   healthSlider: {fileID: 1000150826448874120}
   staminaSlider: {fileID: 3904127507802433856}
+  levelText: {fileID: 371824840191111976, guid: 6223017160f3d8c4eb5165d65f85464c, type: 3}
+  expText: {fileID: 1093977852685204676, guid: 46ff6e58f09e16f4f9a91f7c4acf22e1, type: 3}
 --- !u!114 &4578938430786258909
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -719,9 +721,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d1d7f0935ee5a747801b7882c20b898, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAttack
-  attackRadius: 5
-  attackDamage: 30
-  attackCooldown: 0.5
+  baseAttackRadius: 1.2
+  attackOffset: 1
+  baseAttackDamage: 30
+  inputBufferWindow: 0.1
+  comboSteps: []
   attackVisual: {fileID: 0}
   visualDuration: 0.2
 --- !u!1 &5946365973108869919

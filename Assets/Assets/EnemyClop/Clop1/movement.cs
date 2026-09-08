@@ -19,36 +19,54 @@ public class EnemyFollow : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+
+        if (player == null)
+        {
+            GameObject playerObj = GameObject.FindWithTag("Player");
+            if (playerObj != null)
+            {
+                player = playerObj.transform;
+            }
+        }
+
+
     }
 
     void Update()
-    {
+    {   
+        // Якщо гравець не знайдений, намагаємося його знайти за тегом
+        if (player == null)
+        {
+            GameObject playerObj = GameObject.FindWithTag("Player");
+            if (playerObj != null)
+            {
+                player = playerObj.transform;
+            }
+            return; // Пропускаємо цей кадр, якщо гравця все ще немає
+        }
+
         // Якщо ворог зараз відходить назад — ігноруємо звичайний рух до гравця
         if (isRetreating) return; 
 
-        if (player != null)
+        if (isTouchingPlayer)
         {
-            if (isTouchingPlayer)
-            {
-                movement = Vector2.zero;
-                return; 
-            }
+            movement = Vector2.zero;
+            return; 
+        }
 
-            Vector3 direction = player.position - transform.position;
-            float distance = direction.magnitude;
+        Vector3 direction = player.position - transform.position;
+        float distance = direction.magnitude;
 
-            if (distance > stoppingDistance)
-            {
-                direction.Normalize();
-                movement = direction;
-            }
-            else
-            {
-                movement = Vector2.zero;
-            }
+        if (distance > stoppingDistance)
+        {
+            direction.Normalize();
+            movement = direction;
+        }
+        else
+        {
+            movement = Vector2.zero;
         }
     }
-
     private void FixedUpdate()
     {
         // Якщо відходить назад — фізичний рух контролюється корутиною, тому тут нічого не робимо

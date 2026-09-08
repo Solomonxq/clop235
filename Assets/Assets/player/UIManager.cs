@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro; // Обов'язково для TextMeshPro
 
 public class UIManager : MonoBehaviour
 {
@@ -8,6 +9,10 @@ public class UIManager : MonoBehaviour
     [Header("Смужки UI")]
     public Slider healthSlider;
     public Slider staminaSlider;
+
+    [Header("UI Рівня та Досвіду")]
+    public TextMeshProUGUI levelText;      // Текст для рівня
+    public TextMeshProUGUI expText;        // Текст для досвіду (наприклад, "50 / 100")
 
     void OnEnable()
     {
@@ -22,7 +27,13 @@ public class UIManager : MonoBehaviour
         {
             playerStats.OnHealthChanged += UpdateHealthUI;
             playerStats.OnStaminaChanged += UpdateStaminaUI;
+            playerStats.OnLevlChanged += UpdateLevelUI;
+            playerStats.OnExpChanged += UpdateExpUI;
             playerStats.OnDied += ShowDeathScreen;
+
+            // Оновлюємо UI одразу при включенні на випадок, якщо значення вже існують
+            UpdateLevelUI(playerStats.levl, playerStats.levl);
+            UpdateExpUI(playerStats.currentExp, playerStats.expToNextLevel);
         }
         else
         {
@@ -37,6 +48,8 @@ public class UIManager : MonoBehaviour
         {
             playerStats.OnHealthChanged -= UpdateHealthUI;
             playerStats.OnStaminaChanged -= UpdateStaminaUI;
+            playerStats.OnLevlChanged -= UpdateLevelUI;
+            playerStats.OnExpChanged -= UpdateExpUI;
             playerStats.OnDied -= ShowDeathScreen;
         }
     }
@@ -66,6 +79,24 @@ public class UIManager : MonoBehaviour
         else
         {
             Debug.LogError("Увага: Не призначено Stamina Slider в UIManager! Перетягніть його в Інспекторі.");
+        }
+    }
+
+    // Оновлення тексту рівня
+    void UpdateLevelUI(int currentLevel, int maxLevel)
+    {
+        if (levelText != null)
+        {
+            levelText.text = "Lvl: " + currentLevel;
+        }
+    }
+
+    // Оновлення тексту досвіду
+    void UpdateExpUI(int currentExp, int expToNext)
+    {
+        if (expText != null)
+        {
+            expText.text = "EXP: " + currentExp + " / " + expToNext;
         }
     }
 

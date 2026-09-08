@@ -1,8 +1,15 @@
 using UnityEngine;
+using System;
 
 public class EnemyHealth : MonoBehaviour
 {
-    public float maxHealth = 100f;
+    [Header("Характеристики та рівень")]
+    public int enemyLevel = 1;              
+    public float baseHealth = 100f;         
+    public float healthMultiplier = 1.2f;   
+    public float damageMultiplier = 1.15f;  
+    
+    [HideInInspector] public float currentMaxHealth;
     private float currentHealth;
 
     [Header("Візуал та позиція шкоди")]
@@ -12,13 +19,34 @@ public class EnemyHealth : MonoBehaviour
     public float textOffsetZ = -0.5f; 
 
     [Header("Налаштування випадіння луту")]
-    [SerializeField] private GameObject itemPrefab; // Префаб предмету, який випадає
+    [SerializeField] private GameObject itemPrefab; 
     [Range(0f, 100f)]
-    [SerializeField] private float dropChance = 50f; // Шанс випадіння у відсотках
+    [SerializeField] private float dropChance = 50f; 
+
+    // --- ІВЕНТ СМЕРТІ ВОРОГА (передає рівень ворога) ---
+    public static event Action<int> OnEnemyDied;
 
     void Start()
     {
-        currentHealth = maxHealth;
+        CalculateStats();
+        currentHealth = currentMaxHealth;
+    }
+
+    public void InitializeLevel(int level)
+    {
+        enemyLevel = Mathf.Max(1, level);
+        CalculateStats();
+        currentHealth = currentMaxHealth;
+    }
+
+    private void CalculateStats()
+    {
+        currentMaxHealth = baseHealth * Mathf.Pow(healthMultiplier, enemyLevel - 1);
+    }
+
+    public float GetScaledDamage(float baseDamage)
+    {
+        return baseDamage * Mathf.Pow(damageMultiplier, enemyLevel - 1);
     }
 
     void OnEnable()
@@ -33,16 +61,13 @@ public class EnemyHealth : MonoBehaviour
 
     private void CheckIfHit(Vector2 playerPosition, Vector2 attackPoint, float attackRadius, float damage)
     {
-        // 1. Перевіряємо відстань до кола ураження
         float distanceToAttack = Vector2.Distance(transform.position, attackPoint);
 
         if (distanceToAttack <= attackRadius)
         {
-            // 2. Напрямок удару та напрямок від гравця до ворога
             Vector2 attackDir = (attackPoint - playerPosition).normalized;
             Vector2 enemyDir = ((Vector2)transform.position - playerPosition).normalized;
 
-            // Скалярний добуток: > 0 означає, що ворог знаходиться спереду напрямку удару
             if (Vector2.Dot(enemyDir, attackDir) > 0)
             {
                 TakeDamage(damage);
@@ -55,12 +80,11 @@ public class EnemyHealth : MonoBehaviour
         if (currentHealth <= 0) return;
 
         currentHealth -= amount;
-        Debug.Log(gameObject.name + " отримав удар! Залишилось здоров'я: " + currentHealth);
 
         if (damageTextPrefab != null)
         {
             Vector3 spawnPosition = new Vector3(
-                transform.position.x + Random.Range(-textOffsetX, textOffsetX),
+                transform.position.x + UnityEngine.Random.Range(-textOffsetX, textOffsetX),
                 transform.position.y + textOffsetY,
                 transform.position.z + textOffsetZ
             );
@@ -80,11 +104,11 @@ public class EnemyHealth : MonoBehaviour
         }
     }
 
-   void Die()
+    void Die()
     {
-        Debug.Log(gameObject.name + " помер!");
+        // Викликаємо івент смерті і передаємо рівень цього ворога
+        OnEnemyDied?.Invoke(enemyLevel);
 
-        // Викликаємо випадіння луту перед тим, як вимкнути ворога
         DropItem();
 
         EnemyFollow followScript = GetComponent<EnemyFollow>();
@@ -100,15 +124,14 @@ public class EnemyHealth : MonoBehaviour
             rb.simulated = false;
         }
 
-        // Повністю видаляємо об'єкт ворога зі сцени
         Destroy(gameObject);
     }
+
     private void DropItem()
     {
         if (itemPrefab == null) return;
 
-        // Генеруємо випадкове число від 0 до 100 для перевірки шансу
-        float roll = Random.Range(0f, 100f);
+        float roll = UnityEngine.Random.Range(0f, 100f);
 
         if (roll <= dropChance)
         {

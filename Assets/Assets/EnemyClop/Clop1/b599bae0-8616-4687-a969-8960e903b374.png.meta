@@ -1,22 +1,10 @@
 fileFormatVersion: 2
-guid: fdb77866666160b4cbb26da9c0f8dfef
+guid: d9acf190accf97d4c9fccc48c51d917d
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8792108949057780128
-    second: RUH AS 4_0
-  - first:
-      213: -3953886889693917138
-    second: RUH AS 4_1
-  - first:
-      213: -3493238128531278240
-    second: RUH AS 4_2
-  - first:
-      213: 2558194904464172693
-    second: RUH AS 4_3
-  - first:
-      213: 5879584389384722490
-    second: RUH AS 4_4
+      213: 3829975139693819964
+    second: b599bae0-8616-4687-a969-8960e903b374_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -63,7 +51,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 256
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -127,13 +115,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: RUH AS 4_0
+      name: b599bae0-8616-4687-a969-8960e903b374_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 450
-        height: 734
+        width: 327
+        height: 246
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -142,96 +130,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0a93f1fa188d30a70800000000000000
-      internalID: 8792108949057780128
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: RUH AS 4_1
-      rect:
-        serializedVersion: 2
-        x: 417
-        y: 714
-        width: 9
-        height: 9
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: e2058b982d8f029c0800000000000000
-      internalID: -3953886889693917138
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: RUH AS 4_2
-      rect:
-        serializedVersion: 2
-        x: 427
-        y: 671
-        width: 23
-        height: 40
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 066fa091e66858fc0800000000000000
-      internalID: -3493238128531278240
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: RUH AS 4_3
-      rect:
-        serializedVersion: 2
-        x: 441
-        y: 271
-        width: 8
-        height: 10
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 5962dc236b8808320800000000000000
-      internalID: 2558194904464172693
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: RUH AS 4_4
-      rect:
-        serializedVersion: 2
-        x: 412
-        y: 80
-        width: 6
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: a38553cc9da789150800000000000000
-      internalID: 5879584389384722490
+      spriteID: c38f604f81ec62530800000000000000
+      internalID: 3829975139693819964
       vertices: []
       indices: 
       edges: []
@@ -250,11 +150,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      RUH AS 4_0: 8792108949057780128
-      RUH AS 4_1: -3953886889693917138
-      RUH AS 4_2: -3493238128531278240
-      RUH AS 4_3: 2558194904464172693
-      RUH AS 4_4: 5879584389384722490
+      b599bae0-8616-4687-a969-8960e903b374_0: 3829975139693819964
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
