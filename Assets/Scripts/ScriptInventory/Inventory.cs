@@ -6,12 +6,9 @@ using System.Collections.Generic;
 public class Inventory : MonoBehaviour
 {
     public DataBaseInventory data;
-
-    // Використовуємо єдину назву списку — items
     public List<ItemInventory> items = new List<ItemInventory>();
 
     public GameObject gameObjShow;
-
     public GameObject InventoryMainObject;
     public int MaxCount;
 
@@ -24,22 +21,61 @@ public class Inventory : MonoBehaviour
     public RectTransform movingObject;
     public Vector3 offset;
 
+    public void Start()
+    {
+        if (items.Count == 0)
+        {
+            AddGraphics();
+        }
+
+        // Тестове заповнення інвентарю (тепер ID 0 теж може випадати)
+        for (int i = 0; i < MaxCount; i++) 
+        {
+            ItemInventory tempInv = new ItemInventory();
+            tempInv.id = Random.Range(0, data.items.Count);
+            tempInv.count = Random.Range(1, 22);
+            AddItem(i, tempInv);
+        } 
+
+        UpdateInventory();
+    }
+
+    public void Update()
+    {
+        if (currentID != -1)
+        {
+            MoveObject();
+        }
+    }
+
     public void AddItem(int id, ItemInventory InvItem)
     {
         items[id].id = InvItem.id;
         items[id].count = InvItem.count;
-        // Виправляємо .image на .icon відповідно до твого класу Item
-        items[id].itemGameObj.GetComponent<Image>().sprite = data.items[InvItem.id].icon;
+        
+        // Встановлюємо спрайт з бази даних
+        Image itemImage = items[id].itemGameObj.GetComponent<Image>();
+        if (InvItem.id < data.items.Count)
+        {
+            itemImage.sprite = data.items[InvItem.id].img;
+            itemImage.color = Color.white; 
+        }
 
-        if (InvItem.count > 1 && InvItem.id != 0)
+        // Шукаємо компонент тексту всередині комірки
+        Text countText = items[id].itemGameObj.GetComponentInChildren<Text>();
+        if (countText != null)
         {
-            items[id].itemGameObj.GetComponentInChildren<Text>().text = InvItem.count.ToString();
+            // Виводимо цифру, якщо предметів більше 1 і це не пустий слот (ID 0)
+            if (InvItem.count > 1 && InvItem.id != 0)
+            {
+                countText.text = InvItem.count.ToString();
+            }
+            else
+            {
+                countText.text = ""; // Для 1 штуки або пустого слота ховаємо текст
+            }
         }
-        else
-        {
-            items[id].itemGameObj.GetComponentInChildren<Text>().text = "";
-        }
-    }   
+    }
 
     public void AddGraphics()
     {
@@ -51,13 +87,13 @@ public class Inventory : MonoBehaviour
             ii.itemGameObj = newItem;
 
             RectTransform rt = newItem.GetComponent<RectTransform>();
-            rt.localPosition = new Vector3(0, 0, 0); // Виправлено Veclor3 на Vector3
             rt.localScale = new Vector3(1, 1, 1);
-            newItem.GetComponentInChildren<RectTransform>().localScale = new Vector3(1, 1, 1); 
 
             Button tempButton = newItem.GetComponent<Button>();
-
-            tempButton.onClick.AddListener(delegate { SelectObject(); });
+            if (tempButton != null)
+            {
+                tempButton.onClick.AddListener(delegate { SelectObject(); });
+            }
 
             items.Add(ii);
         } 
@@ -67,46 +103,60 @@ public class Inventory : MonoBehaviour
     {
         for (int i = 0; i < MaxCount; i++)
         {
-            if (items[i].id != 0 && items[i].count > 1)
-            {
-                items[i].itemGameObj.GetComponentInChildren<Text>().text = items[i].count.ToString();
-            }
-            else
-            {
-                items[i].itemGameObj.GetComponentInChildren<Text>().text = "";
-            }
-            items[i].itemGameObj.GetComponentInChildren<Image>().sprite = data.items[items[i].id].icon; // .icon замість .image
+            AddItem(i, items[i]);
         }
     }
 
     public void SelectObject()
     {
+        if (es == null) es = EventSystem.current;
+        if (es == null || es.currentSelectedGameObject == null) return;
+
         if (currentID == -1)
         {
-            // Виправлено синтаксис отримання вибраного об'єкта через EventSystem
             currentID = int.Parse(es.currentSelectedGameObject.name);
             currentItem = CopyInventoryItem(items[currentID]);
-            movingObject.gameObject.SetActive(true); // Виправлено gameOject на gameObject
-            movingObject.GetComponent<Image>().sprite = data.items[currentItem.id].icon; // Виправлено date на data та image на icon
+            
+            if (movingObject != null)
+            {
+                movingObject.gameObject.SetActive(true);
+                Image moveImg = movingObject.GetComponent<Image>();
+                if (moveImg != null && currentItem.id < data.items.Count)
+                {
+                    moveImg.sprite = data.items[currentItem.id].img;
+                    moveImg.color = Color.white;
+                }
+            }
 
-            // Очищаємо слот, ставимо нульовий елемент
-            ItemInventory emptyItem = new ItemInventory { id = 0, count = 0 };
+            // Очищаємо вибраний слот (ставимо ID 0 - Empty)
+            ItemInventory emptyItem = new ItemInventory { id = 0, count = 0, itemGameObj = items[currentID].itemGameObj };
             AddItem(currentID, emptyItem);
         }
         else
         {
-            AddItem(currentID, items[int.Parse(es.currentSelectedGameObject.name)]);
-            AddItem(int.Parse(es.currentSelectedGameObject.name), currentItem); 
-            currentID = -1;
+            int targetID = int.Parse(es.currentSelectedGameObject.name);
+            
+            ItemInventory targetItemCopy = CopyInventoryItem(items[targetID]);
+            AddItem(targetID, currentItem);
+            AddItem(currentID, targetItemCopy);
 
-            movingObject.gameObject.SetActive(false);
+            currentID = -1;
+            if (movingObject != null)
+            {
+                movingObject.gameObject.SetActive(false);
+            }
         }
     }
 
     public void MoveObject()
     {
+        if (movingObject == null || cam == null) return;
+
         Vector3 pos = Input.mousePosition + offset;
-        pos.z = InventoryMainObject.GetComponent<RectTransform>().position.z; // Виправлено poz на pos та регістр InventoryMainObject
+        if (InventoryMainObject != null)
+        {
+            pos.z = InventoryMainObject.GetComponent<RectTransform>().position.z;
+        }
         movingObject.position = cam.ScreenToWorldPoint(pos);
     }
 
