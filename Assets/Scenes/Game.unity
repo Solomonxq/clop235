@@ -839,6 +839,34 @@ PrefabInstance:
       propertyPath: m_Name
       value: Item
       objectReference: {fileID: 0}
+    - target: {fileID: 1027464234363209842, guid: c48697a7d460a7742849209f8439e3ef, type: 3}
+      propertyPath: m_Color.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1027464234363209842, guid: c48697a7d460a7742849209f8439e3ef, type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1027464234363209842, guid: c48697a7d460a7742849209f8439e3ef, type: 3}
+      propertyPath: m_Color.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1027464234363209842, guid: c48697a7d460a7742849209f8439e3ef, type: 3}
+      propertyPath: m_FontData.m_MinSize
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4933689975772176008, guid: c48697a7d460a7742849209f8439e3ef, type: 3}
+      propertyPath: m_EffectColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4933689975772176008, guid: c48697a7d460a7742849209f8439e3ef, type: 3}
+      propertyPath: m_EffectColor.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4933689975772176008, guid: c48697a7d460a7742849209f8439e3ef, type: 3}
+      propertyPath: m_EffectColor.r
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4209188974484192867, guid: 2a21ac5fa9684d845bbd8e51934b037a, type: 3}
       propertyPath: m_Color.b
       value: 0.01988605

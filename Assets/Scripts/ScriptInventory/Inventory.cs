@@ -21,6 +21,8 @@ public class Inventory : MonoBehaviour
     public RectTransform movingObject;
     public Vector3 offset;
 
+    public GameObject background;
+
     public void Start()
     {
         if (items.Count == 0)
@@ -28,7 +30,7 @@ public class Inventory : MonoBehaviour
             AddGraphics();
         }
 
-        // Тестове заповнення інвентарю (тепер ID 0 теж може випадати)
+        // Тестове заповнення інвентарю
         for (int i = 0; i < MaxCount; i++) 
         {
             ItemInventory tempInv = new ItemInventory();
@@ -45,6 +47,19 @@ public class Inventory : MonoBehaviour
         if (currentID != -1)
         {
             MoveObject();
+        }
+
+        // Виправлено input та GetKey умову
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            if (background != null)
+            {
+                background.SetActive(!background.activeSelf);
+                if (background.activeSelf)
+                {
+                    UpdateInventory();
+                }
+            }
         }
     }
 
@@ -65,14 +80,13 @@ public class Inventory : MonoBehaviour
         Text countText = items[id].itemGameObj.GetComponentInChildren<Text>();
         if (countText != null)
         {
-            // Виводимо цифру, якщо предметів більше 1 і це не пустий слот (ID 0)
             if (InvItem.count > 1 && InvItem.id != 0)
             {
                 countText.text = InvItem.count.ToString();
             }
             else
             {
-                countText.text = ""; // Для 1 штуки або пустого слота ховаємо текст
+                countText.text = ""; 
             }
         }
     }
@@ -135,13 +149,37 @@ public class Inventory : MonoBehaviour
         else
         {
             int targetID = int.Parse(es.currentSelectedGameObject.name);
-            
-            ItemInventory targetItemCopy = CopyInventoryItem(items[targetID]);
-            AddItem(targetID, currentItem);
-            AddItem(currentID, targetItemCopy);
+            ItemInventory targetItem = items[targetID];
 
-            currentID = -1;
-            if (movingObject != null)
+            // Якщо клікнули на той самий тип предметів і це не порожній слот
+            if (currentItem.id == targetItem.id && currentItem.id != 0)
+            {
+                int totalCount = targetItem.count + currentItem.count;
+                if (totalCount <= 64)
+                {
+                    targetItem.count = totalCount;
+                    AddItem(targetID, targetItem);
+                    currentID = -1;
+                }
+                else
+                {
+                    currentItem.count = totalCount - 64;
+                    targetItem.count = 64;
+                    AddItem(targetID, targetItem);
+                    // Залишаємо перетягування для залишку предметів
+                }
+            }
+            else
+            {
+                // Міняємо місцями або ставимо в новий слот
+                ItemInventory targetItemCopy = CopyInventoryItem(targetItem);
+                AddItem(targetID, currentItem);
+                AddItem(currentID, targetItemCopy);
+
+                currentID = -1;
+            }
+
+            if (currentID == -1 && movingObject != null)
             {
                 movingObject.gameObject.SetActive(false);
             }
