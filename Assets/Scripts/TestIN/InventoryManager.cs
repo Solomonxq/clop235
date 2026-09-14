@@ -3,45 +3,44 @@ using UnityEngine;
 
 public class InventoryManager : MonoBehaviour
 {
-    public static InventoryManager Instance;
+    public static InventoryManager Instance { get; private set; }
 
-    [Header("Налаштування інвентарю")]
-    public int inventorySize = 20; // Скільки всього клітинок буде у твоєму інвентарі
+    [Header("Налаштування")]
+    public int inventorySize = 20;
     public List<InventorySlot> inventory = new List<InventorySlot>();
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
+        Instance = this;
 
-        // Створюємо порожні слоти при запуску
+        InitializeInventory();
+    }
+
+    private void InitializeInventory()
+    {
+        inventory.Clear();
         for (int i = 0; i < inventorySize; i++)
         {
             inventory.Add(new InventorySlot());
         }
     }
 
-    // Метод для додавання предмета в інвентар
-    public bool AddItem(ItemData item, int amount)
+    public bool AddItem(ItemData item, int amount = 1)
     {
-        // 1. Шукаємо слот, де вже є такий самий предмет (для стакування)
         foreach (var slot in inventory)
         {
-            if (!slot.IsEmpty() && slot.item == item)
+            if (!slot.IsEmpty() && slot.item == item && slot.amount < item.maxStackSize)
             {
                 slot.amount += amount;
                 return true;
             }
         }
 
-        // 2. Якщо такого немає, шукаємо перший порожній слот
         foreach (var slot in inventory)
         {
             if (slot.IsEmpty())

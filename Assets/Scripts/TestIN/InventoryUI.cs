@@ -4,38 +4,29 @@ using UnityEngine;
 public class InventoryUI : MonoBehaviour
 {
     [Header("Посилання")]
-    [SerializeField] private GameObject inventoryPanel;   // Сама панель інвентарю (щоб вмикати/вимикати)
-    [SerializeField] private Transform slotsContainer;    // Контейнер із Grid Layout Group, куди будуть падати слоти
-    [SerializeField] private GameObject slotPrefab;       // Твій префаб клітинки (слота)
+    [SerializeField] private GameObject inventoryPanel;   // Панель Background
+    [SerializeField] private Transform slotsContainer;    // SlotsContainer
+    [SerializeField] private GameObject slotPrefab;       // Префаб слота z папки Assets
 
-    private List<ItemSlotUI> slotUIs = new List<ItemSlotUI>();
+    private List<InventorySlotUI> slotUIs = new List<InventorySlotUI>();
     private bool isOpen = false;
 
     private void Start()
     {
-        // Створюємо слоти один раз при старті гри на основі даних з менеджера
         InitializeInventoryUI();
-
-        // Одразу закриваємо вікно на старті (або залиш відкритим, якщо хочеш)
-        if (inventoryPanel != null)
-        {
-            inventoryPanel.SetActive(false);
-            isOpen = false;
-        }
-    }
-
-    private void Update()
-    {
-        // Натискання клавіші 'E' для відкриття/закриття інвентарю
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            ToggleInventory();
-        }
+        SetInventoryState(false);
     }
 
     public void ToggleInventory()
     {
         isOpen = !isOpen;
+        SetInventoryState(isOpen);
+    }
+
+    private void SetInventoryState(bool state)
+    {
+        isOpen = state;
+
         if (inventoryPanel != null)
         {
             inventoryPanel.SetActive(isOpen);
@@ -44,24 +35,28 @@ public class InventoryUI : MonoBehaviour
         if (isOpen)
         {
             RefreshUI();
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
     }
 
     private void InitializeInventoryUI()
     {
-        // Очищаємо контейнер на випадок, якщо там щось було
+        if (slotsContainer == null) return;
+
         foreach (Transform child in slotsContainer)
         {
             Destroy(child.gameObject);
         }
         slotUIs.Clear();
 
-        // Створюємо стільки слотів, скільки вказано в InventoryManager
+        if (InventoryManager.Instance == null) return;
+
         int size = InventoryManager.Instance.inventorySize;
         for (int i = 0; i < size; i++)
         {
             GameObject newSlotObj = Instantiate(slotPrefab, slotsContainer);
-            ItemSlotUI slotUI = newSlotObj.GetComponent<ItemSlotUI>();
+            InventorySlotUI slotUI = newSlotObj.GetComponent<InventorySlotUI>();
             slotUIs.Add(slotUI);
         }
 
@@ -70,17 +65,19 @@ public class InventoryUI : MonoBehaviour
 
     public void RefreshUI()
     {
+        if (InventoryManager.Instance == null) return;
+
         var inventoryData = InventoryManager.Instance.inventory;
 
         for (int i = 0; i < slotUIs.Count; i++)
         {
             if (i < inventoryData.Count)
             {
-                slotUIs[i].UpdateSlot(inventoryData[i]);
+                slotUIs[i].UpdateSlotUI(inventoryData[i]);
             }
             else
             {
-                slotUIs[i].UpdateSlot(null);
+                slotUIs[i].UpdateSlotUI(null);
             }
         }
     }

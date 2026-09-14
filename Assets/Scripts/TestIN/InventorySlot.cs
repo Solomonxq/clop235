@@ -11,6 +11,12 @@ public class InventorySlot
         Clear();
     }
 
+    public InventorySlot(ItemData newItem, int newAmount)
+    {
+        item = newItem;
+        amount = newAmount;
+    }
+
     public void Clear()
     {
         item = null;
@@ -18,9 +24,4 @@ public class InventorySlot
     }
 
     public bool IsEmpty() => item == null || amount <= 0;
-
-    public InventorySlot Clone()
-    {
-        return new InventorySlot { item = this.item, amount = this.amount };
-    }
 }
