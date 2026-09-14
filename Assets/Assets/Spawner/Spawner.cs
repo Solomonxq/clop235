@@ -1,4 +1,6 @@
 using UnityEngine;
+using System;
+using UnityEngine.SceneManagement;
 
 public class Spawner : MonoBehaviour
 {
@@ -6,42 +8,98 @@ public class Spawner : MonoBehaviour
     public PlayerStats playerStats;
     public GameObject enemyPrefab;
 
-    [Header("Налаштування ліміту НА КАРТІ (збільшується кожні 5 левелів)")]
-    public int baseMaxActiveEnemies = 10;     // Базовий ліміт на карті на 1-4 рівнях
-    public int activeEnemiesPer5Levels = 5;   // Скільки додається до ліміту карти кожні 5 рівнів
+    [Header("Налаштування ліміту НА КАРТІ")]
+    public int baseMaxActiveEnemies = 10;    
+    public int activeEnemiesPer5Levels = 5;   
 
-    [Header("Налаштування ЗАГАЛЬНОЇ кількості (збільшується на 2 з кожним левелом)")]
-    public int baseTotalEnemies = 20;         // Базова загальна кількість на 1 рівні
+    [Header("Налаштування ЗАГАЛЬНОЇ кількості")]
+    public int baseTotalEnemies = 20;        
     
-    private int spawnedTotalCount = 0;        // Скільки всього вже спавнер створив за забіг
+    private int spawnedTotalCount = 0;        
+    private int currentWaveTotalEnemies = 0;  
+    private int enemiesKilledInCurrentWave = 0;
 
     [Header("Час спавну")]
     public float spawnInterval = 3f;
     private float spawnTimer;
 
-    [Header("Точки спавну (опціонально)")]
-    public Transform[] spawnPoints;           // Якщо ви використовуєте масив точок
+    [Header("Точки спавну")]
+    public Transform[] spawnPoints;          
+
+    public event Action<int> OnWaveChanged;
+    public event Action<int, int> OnWaveProgressChanged; 
+
+    private bool waveEnded = false;
+
+    void Awake()
+    {
+        FindActivePlayer();
+    }
 
     void Start()
     {
-        // Автоматично шукаємо гравця, якщо не вказано в інспекторі
         if (playerStats == null)
         {
-            GameObject player = GameObject.FindWithTag("Player");
-            if (player != null)
-            {
-                playerStats = player.GetComponent<PlayerStats>();
-            }
+            FindActivePlayer();
         }
+
+        CalculateWaveTotal();
+
+        if (playerStats != null)
+        {
+            playerStats.RefreshUI();
+            OnWaveChanged?.Invoke(playerStats.currentWave);
+        }
+        
+        OnWaveProgressChanged?.Invoke(enemiesKilledInCurrentWave, currentWaveTotalEnemies);
+    }
+
+    // Примусово шукаємо Гравця саме на СЦЕНІ, а не в папці Assets (Префаб)
+    private void FindActivePlayer()
+    {
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+        {
+            playerStats = playerObj.GetComponent<PlayerStats>();
+        }
+        else
+        {
+            playerStats = FindFirstObjectByType<PlayerStats>();
+        }
+
+        if (playerStats == null)
+        {
+            Debug.LogError("[Spawner] Помилка! На сцені не знайдено об'єкт з PlayerStats або тегом 'Player'.");
+        }
+    }
+
+    void OnEnable()
+    {
+        EnemyHealth.OnEnemyDied += HandleEnemyDeathForWave;
+    }
+
+    void OnDisable()
+    {
+        EnemyHealth.OnEnemyDied -= HandleEnemyDeathForWave;
+    }
+
+    void CalculateWaveTotal()
+    {
+        int waveMultiplier = playerStats != null ? (playerStats.currentWave - 1) * 5 : 0;
+        currentWaveTotalEnemies = baseTotalEnemies + waveMultiplier;
+        enemiesKilledInCurrentWave = 0;
+        spawnedTotalCount = 0;
     }
 
     void Update()
     {
-        // Поточний ліміт за всю гру (збільшується на 2 з кожним новим левелом)
-        int currentTotalLimit = baseTotalEnemies + (playerStats != null ? (playerStats.levl - 1) * 2 : 0);
+        if (waveEnded) return; 
 
-        // Якщо вже спарнили загальний ліміт — зупиняємо спавн
-        if (spawnedTotalCount >= currentTotalLimit) return;
+        if (spawnedTotalCount >= currentWaveTotalEnemies)
+        {
+            EndWave();
+            return;
+        }
 
         spawnTimer += Time.deltaTime;
 
@@ -56,18 +114,17 @@ public class Spawner : MonoBehaviour
     { 
         if (playerStats == null || enemyPrefab == null) return;
 
-        // 1. Поточний загальний ліміт (збільшується на 2 з кожним левелом)
-        int currentTotalLimit = baseTotalEnemies + (playerStats.levl - 1) * 2;
-        if (spawnedTotalCount >= currentTotalLimit) return;
+        if (spawnedTotalCount >= currentWaveTotalEnemies)
+        {
+            EndWave();
+            return;
+        }
 
-        // 2. Ліміт ОДНОЧАСНО на карті (збільшується КОЖНІ 5 левелів)
         int levelBlock = (playerStats.levl - 1) / 5;
         int currentMaxActiveEnemies = baseMaxActiveEnemies + levelBlock * activeEnemiesPer5Levels;
 
-        // Рахуємо скільки зараз клопів на карті (за тегом "Enemy")
         GameObject[] activeEnemies = GameObject.FindGameObjectsWithTag("Enemy");
         
-        // Якщо на карті менше активного ліміту — спавнимо нового
         if (activeEnemies.Length < currentMaxActiveEnemies)
         { 
             SpawnEnemy();
@@ -80,13 +137,49 @@ public class Spawner : MonoBehaviour
         
         if (spawnPoints != null && spawnPoints.Length > 0)
         {
-            Transform randomPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
+            Transform randomPoint = spawnPoints[UnityEngine.Random.Range(0, spawnPoints.Length)];
             spawnPosition = randomPoint.position;
         }
 
         Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
-        
-        // Збільшуємо лічильник створених за всю гру
         spawnedTotalCount++;
+    }
+
+    void HandleEnemyDeathForWave(int enemyLevel)
+    {
+        if (waveEnded) return;
+
+        enemiesKilledInCurrentWave++;
+        if (enemiesKilledInCurrentWave > currentWaveTotalEnemies) 
+            enemiesKilledInCurrentWave = currentWaveTotalEnemies;
+
+        OnWaveProgressChanged?.Invoke(enemiesKilledInCurrentWave, currentWaveTotalEnemies);
+    }
+
+    void EndWave()
+    {
+        if (waveEnded) return;
+
+        if (spawnedTotalCount >= currentWaveTotalEnemies)
+        {
+            GameObject[] activeEnemies = GameObject.FindGameObjectsWithTag("Enemy");
+            if (activeEnemies.Length == 0)
+            {
+                waveEnded = true;
+
+                // Якщо посилання втратилося — знайдемо знову перед збереженням
+                if (playerStats == null) FindActivePlayer();
+
+                if (playerStats != null)
+                {
+                    // Оновлюємо хвилю та зберігаємо актуальні дані живого гравця
+                    playerStats.SetWave(playerStats.currentWave + 1);
+                    OnWaveChanged?.Invoke(playerStats.currentWave);
+                }
+
+                // Перехід на стартову локацію
+                SceneManager.LoadScene("Startlocation");
+            }
+        }
     }
 }

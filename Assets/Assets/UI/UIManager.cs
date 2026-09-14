@@ -1,28 +1,33 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; // Обов'язково для TextMeshPro
+using TMPro;
+using UnityEngine.SceneManagement; // Додано для перевірки сцен
 
 public class UIManager : MonoBehaviour
 {
     public PlayerStats playerStats; 
-    
-    [Header("Смужки UI")]
-    public Slider healthSlider;
-    public Slider staminaSlider;
+
+    [Header("Налаштування Сцени")]
+    public string arenaSceneName = "Arena"; // Точна назва вашої сцени Арени
+
+    [Header("Елементи UI Арени")]
+    public GameObject hotbar;               // Посилання на об'єкт Хотбару
+    public Slider healthSlider;             // Смужка HP
+    public Slider staminaSlider;            // Смужка Stamina
 
     [Header("UI Рівня та Досвіду")]
-    public TextMeshProUGUI levelText;      // Текст для рівня
-    public TextMeshProUGUI expText;        // Текст для досвіду (наприклад, "50 / 100")
+    public TextMeshProUGUI levelText;      
+    public TextMeshProUGUI expText;        
 
     void OnEnable()
     {
-        // 1. Якщо гравець не перетягнутий в Інспекторі, шукаємо його на сцені автоматично
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
         if (playerStats == null)
         {
-            playerStats = FindObjectOfType<PlayerStats>();
+            playerStats = FindAnyObjectByType<PlayerStats>();
         }
 
-        // 2. Якщо скрипт успішно знайшов гравця, підписуємося на події
         if (playerStats != null)
         {
             playerStats.OnHealthChanged += UpdateHealthUI;
@@ -31,19 +36,17 @@ public class UIManager : MonoBehaviour
             playerStats.OnExpChanged += UpdateExpUI;
             playerStats.OnDied += ShowDeathScreen;
 
-            // Оновлюємо UI одразу при включенні на випадок, якщо значення вже існують
             UpdateLevelUI(playerStats.levl, playerStats.levl);
             UpdateExpUI(playerStats.currentExp, playerStats.expToNextLevel);
         }
-        else
-        {
-            Debug.LogError("УВАГА: UIManager не може знайти об'єкт зі скриптом PlayerStats на сцені!");
-        }
+
+        CheckSceneVisibility();
     }
 
     void OnDisable()
     {
-        // Відписуємося безпечно
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+
         if (playerStats != null)
         {
             playerStats.OnHealthChanged -= UpdateHealthUI;
@@ -54,7 +57,25 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    // Ця функція оновлює смужку ХП
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        CheckSceneVisibility();
+    }
+
+    private void CheckSceneVisibility()
+    {
+        bool isArena = SceneManager.GetActiveScene().name == arenaSceneName;
+
+        // Вмикаємо HP, Stamina та Хотбар лише на Арені
+        if (hotbar != null) hotbar.SetActive(isArena);
+        if (healthSlider != null) healthSlider.gameObject.SetActive(isArena);
+        if (staminaSlider != null) staminaSlider.gameObject.SetActive(isArena);
+
+        // Поради щодо Рівня та Досвіду (залиште коментар за потреби):
+        // if (levelText != null) levelText.gameObject.SetActive(isArena);
+        // if (expText != null) expText.gameObject.SetActive(isArena);
+    }
+
     void UpdateHealthUI(float current, float max)
     {
         if (healthSlider != null) 
@@ -62,13 +83,8 @@ public class UIManager : MonoBehaviour
             healthSlider.maxValue = max;    
             healthSlider.value = current;   
         }
-        else
-        {
-            Debug.LogError("Увага: Не призначено Health Slider в UIManager! Перетягніть його в Інспекторі.");
-        }
     }
 
-    // Ця функція оновлює смужку стаміни
     void UpdateStaminaUI(float current, float max)
     {
         if (staminaSlider != null)
@@ -76,13 +92,8 @@ public class UIManager : MonoBehaviour
             staminaSlider.maxValue = max;
             staminaSlider.value = current;
         }
-        else
-        {
-            Debug.LogError("Увага: Не призначено Stamina Slider в UIManager! Перетягніть його в Інспекторі.");
-        }
     }
 
-    // Оновлення тексту рівня
     void UpdateLevelUI(int currentLevel, int maxLevel)
     {
         if (levelText != null)
@@ -91,7 +102,6 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    // Оновлення тексту досвіду
     void UpdateExpUI(int currentExp, int expToNext)
     {
         if (expText != null)

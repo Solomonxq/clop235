@@ -11,10 +11,16 @@ public class PlayerStats : MonoBehaviour
     [Header("Рівень та Досвід")]
     public int levl = 1;
     public int currentExp = 0;
-    public int expToNextLevel = 100;     // Скільки треба досвіду для 1->2 рівня
-    public float expScalingMultiplier = 1.5f; // На скільки збільшується вимога з кожним рівнем
+    public int expToNextLevel = 100;    
+    public float expScalingMultiplier = 1.5f; 
+    
+    [Header("Хвилі (Wave)")]
+    public int currentWave = 1; 
+
+    // Ключі для PlayerPrefs
     private const string LevelSaveKey = "PlayerLevel";
     private const string ExpSaveKey = "PlayerExp";
+    private const string WaveSaveKey = "PlayerWave";
 
     [Header("Витривалість (Stamina)")]
     public float maxStamina = 100f;
@@ -24,30 +30,46 @@ public class PlayerStats : MonoBehaviour
     public event Action<float, float> OnHealthChanged;
     public event Action<float, float> OnStaminaChanged;
     public event Action<int, int> OnLevlChanged;
-    public event Action<int, int> OnExpChanged; // Поточний досвід, досвід до наступного рівня
+    public event Action<int, int> OnExpChanged; 
+    public event Action<int> OnWaveChanged;
     public event Action OnDied;
 
-    void Start()
+    void Awake()
     {
-        currentHealth = maxHealth;
-        currentStamina = maxStamina;
-        
         LoadData();
-
-        OnHealthChanged?.Invoke(currentHealth, maxHealth);
-        OnStaminaChanged?.Invoke(currentStamina, maxStamina);
-        OnLevlChanged?.Invoke(levl, levl);
-        OnExpChanged?.Invoke(currentExp, expToNextLevel);
     }
 
     void OnEnable()
     {
         EnemyHealth.OnEnemyDied += HandleEnemyDeath;
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     void OnDisable()
     {
         EnemyHealth.OnEnemyDied -= HandleEnemyDeath;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    void Start()
+    {
+        currentHealth = maxHealth;
+        currentStamina = maxStamina;
+        RefreshUI();
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        RefreshUI();
+    }
+
+    public void RefreshUI()
+    {
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+        OnStaminaChanged?.Invoke(currentStamina, maxStamina);
+        OnLevlChanged?.Invoke(levl, levl);
+        OnExpChanged?.Invoke(currentExp, expToNextLevel);
+        OnWaveChanged?.Invoke(currentWave);
     }
 
     void Update()
@@ -61,14 +83,13 @@ public class PlayerStats : MonoBehaviour
 
         if (currentHealth <= 0)
         {
+            OnDied?.Invoke();
             OnDead(); 
         }
     }
 
-    // Метод спрацьовує, коли будь-який ворог помирає
     private void HandleEnemyDeath(int enemyLevel)
     {
-        // Розраховуємо досвід: наприклад, базово 20 XP * рівень ворога
         int gainedExp = enemyLevel * 20;
         AddExp(gainedExp);
     }
@@ -77,7 +98,6 @@ public class PlayerStats : MonoBehaviour
     {
         currentExp += amount;
 
-        // Перевірка на підвищення рівня (може підвищитися кілька разів, якщо дали забагато досвіду)
         while (currentExp >= expToNextLevel)
         {
             currentExp -= expToNextLevel;
@@ -90,20 +110,30 @@ public class PlayerStats : MonoBehaviour
 
     public void OnDead()
     {
-        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
-        SceneManager.LoadScene(currentSceneIndex);
+        SaveData();
+        currentHealth = maxHealth;
+        SceneManager.LoadScene("Startlocation");
     }
 
     private void LevelUp()
     {
         levl++;
-        
-        // Збільшуємо кількість потрібного досвіду для наступного рівня за формулою
-        expToNextLevel = Mathf.RoundToInt(expToNextLevel * expScalingMultiplier);
-
-        Debug.Log("Вітаю! Гравець досяг " + levl + " рівня! Наступний рівень вимагає: " + expToNextLevel + " XP");
-
+        RecalculateExpToNextLevel();
+        Debug.Log($"[LEVEL UP] Рівень {levl}! Потрібно XP: {expToNextLevel}");
         OnLevlChanged?.Invoke(levl, levl);
+        SaveData();
+    }
+
+    private void RecalculateExpToNextLevel()
+    {
+        expToNextLevel = Mathf.RoundToInt(100f * Mathf.Pow(expScalingMultiplier, levl - 1));
+    }
+
+    public void SetWave(int newWave)
+    {
+        currentWave = newWave;
+        OnWaveChanged?.Invoke(currentWave); // ДОДАНО: Сповіщаємо UI про зміну хвилі
+        SaveData(); 
     }
 
     public void TakeDamage(float amount)
@@ -112,8 +142,6 @@ public class PlayerStats : MonoBehaviour
 
         currentHealth -= amount;
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
-
-        
     }
 
     public bool UseStamina(float amount)
@@ -131,29 +159,35 @@ public class PlayerStats : MonoBehaviour
     {
         PlayerPrefs.SetInt(LevelSaveKey, levl);
         PlayerPrefs.SetInt(ExpSaveKey, currentExp);
-        PlayerPrefs.Save();
+        PlayerPrefs.SetInt(WaveSaveKey, currentWave);
+        PlayerPrefs.Save(); 
+        
+        Debug.Log($"[ЗБЕРЕЖЕНО] Рівень: {levl}, Досвід: {currentExp}, Хвиля: {currentWave}");
     }
 
     public void LoadData()
     {
+        // PlayerPrefs.GetInt самостійно повертає значення за замовчуванням (1 або 0), якщо ключа ще немає
         levl = PlayerPrefs.GetInt(LevelSaveKey, 1);
         currentExp = PlayerPrefs.GetInt(ExpSaveKey, 0);
+        currentWave = PlayerPrefs.GetInt(WaveSaveKey, 1);
 
-        // Перераховуємо вимоги до наступного рівня відповідно до поточного збереженого рівня
-        expToNextLevel = 100;
-        for (int i = 1; i < levl; i++)
-        {
-            expToNextLevel = Mathf.RoundToInt(expToNextLevel * expScalingMultiplier);
-        }
+        RecalculateExpToNextLevel();
+        Debug.Log($"[ЗАВАНТАЖЕНО] Рівень: {levl}, Досвід: {currentExp}, Хвиля: {currentWave}, Поріг XP: {expToNextLevel}");
     }
 
     public void ResetProgress()
     {
+        PlayerPrefs.DeleteKey(LevelSaveKey);
+        PlayerPrefs.DeleteKey(ExpSaveKey);
+        PlayerPrefs.DeleteKey(WaveSaveKey);
+        
         levl = 1;
         currentExp = 0;
-        expToNextLevel = 100;
+        currentWave = 1;
+        RecalculateExpToNextLevel();
+        
         SaveData();
-        OnLevlChanged?.Invoke(levl, levl);
-        OnExpChanged?.Invoke(currentExp, expToNextLevel);
+        RefreshUI();
     }
 }
