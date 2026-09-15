@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Assets/Scenes/Game.unity.meta
-guid: 6fb19eb29fbf34c4bb069a008fe93122
-========
-guid: 76167b8ba13d3554d9b6da236f27f82c
->>>>>>>> origin/main:Assets/Scenes/Arena.unity.meta
+guid: e0728c863ff52734a98adfbc32a90cc9
 DefaultImporter:
   externalObjects: {}
   userData: 
