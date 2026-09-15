@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 public class DataBaseInventory : MonoBehaviour
 {
-    public List<Item> items = new List<Item>();
+    public List<Itemm> items = new List<Itemm>();
 }
 
 [System.Serializable]
-public class Item
+public class Itemm
 {
     public int id;
     public string name;
